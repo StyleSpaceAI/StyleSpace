@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - InteriorDesign
+
 struct InteriorDesign: Codable, Hashable, Identifiable {
   var id: URL { imageURL }
   var imageURL: URL
@@ -8,13 +10,13 @@ struct InteriorDesign: Codable, Hashable, Identifiable {
 }
 
 #if DEBUG
-extension InteriorDesign {
-  static let fixture1 = InteriorDesign(
-    imageURL: .fixtureImageURL1
-  )
+  extension InteriorDesign {
+    static let fixture1 = InteriorDesign(
+      imageURL: .fixtureImageURL1
+    )
 
-  static let fixture2 = InteriorDesign(
-    imageURL: .fixtureImageURL2
-  )
-}
+    static let fixture2 = InteriorDesign(
+      imageURL: .fixtureImageURL2
+    )
+  }
 #endif

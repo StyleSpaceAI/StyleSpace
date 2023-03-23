@@ -113,7 +113,7 @@ public extension Upload.Status {
         creationDate: .init(),
         status: .completed,
         interiorDesigns: [
-          .fixture1, .fixture2
+          .fixture1, .fixture2,
         ].identified()
       )
     }

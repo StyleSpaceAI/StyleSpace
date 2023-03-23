@@ -39,7 +39,7 @@ extension BackendClient: DependencyKey {
       guard let response = response as? HTTPURLResponse else {
         throw BackendError.invalidResponse
       }
-      guard (200...299).contains(response.statusCode) else {
+      guard (200 ... 299).contains(response.statusCode) else {
         throw BackendError.invalidResponse
       }
     }

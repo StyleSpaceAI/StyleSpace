@@ -49,4 +49,3 @@ public struct GoogleLensResult: Hashable, Codable {
     }
   }
 }
-

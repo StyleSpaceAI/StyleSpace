@@ -5,7 +5,9 @@ import SwiftUI
 
 @MainActor
 final class CameraViewViewModel: ObservableObject {
+  // Signals the camera controller to start photo capture.
   @Published public var capturePhoto = false
+  // Signals whether the camera controller is currently capturing a photo.
   @Published public var capturingPhoto = false
   @Published public var lightLevelPercentage: Double?
   @Published public var detectedObjects = Set<YOLORecognizableObjects>()
@@ -37,23 +39,25 @@ struct CameraView: View {
       .disabled(viewModel.capturingPhoto)
     }
     .overlay(alignment: .top) {
-      UserGuidanceOverlayView { component in
-        switch component {
-        case .level:
-          LevelComponentView()
-        case .illumination:
-          IlluminationComponentView()
-        case .objectDetection:
-          ObjectDetectionComponentView(detectedObjects: $viewModel.detectedObjects)
+      if !viewModel.capturingPhoto {
+        UserGuidanceOverlayView { component in
+          switch component {
+          case .level:
+            LevelComponentView()
+          case .illumination:
+            IlluminationComponentView()
+          case .objectDetection:
+            ObjectDetectionComponentView(detectedObjects: $viewModel.detectedObjects)
+          }
         }
+        .environmentObject(componentCoordinator)
       }
-      .environmentObject(componentCoordinator)
     }
     .onAppear {
       componentCoordinator.setComponents([
         .level,
         .illumination(lightLevelPercentage: viewModel.$lightLevelPercentage),
-        .objectDetection(detectedObjects: viewModel.$detectedObjects)
+        .objectDetection(detectedObjects: viewModel.$detectedObjects),
       ])
     }
   }
