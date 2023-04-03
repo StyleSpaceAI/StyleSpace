@@ -94,8 +94,8 @@ public struct ResultDetailsView: View {
     WithViewStore(store, observe: { $0 }) { viewStore in
       ScrollView(.vertical, showsIndicators: false) {
         LazyVStack(spacing: .grid(2)) {
-          if viewStore.isShowingSlider, let originalImageURL = viewStore.originalImageURL {
-            ImageSlider(leftImageURL: viewStore.imageURL, rightImageURL: originalImageURL)
+          if viewStore.isShowingSlider {
+            ImageSlider(leftImageURL: viewStore.imageURL, rightImageURL: viewStore.originalImageURL)
           } else {
             LazyImage(url: viewStore.imageURL) { state in
               if let image = state.image {
