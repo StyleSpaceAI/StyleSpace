@@ -1,7 +1,7 @@
 <a name="readme-top"></a>
 
 <div align="center">
-  <a href="https://github.com/github_username/repo_name">
+  <a href="https://github.com/StyleSpaceAI/StyleSpace">
     <img src="App/Resources/Assets.xcassets/AppIcon.appiconset/ios-marketing.png" alt="Logo" width="80" height="80">
   </a>
 
