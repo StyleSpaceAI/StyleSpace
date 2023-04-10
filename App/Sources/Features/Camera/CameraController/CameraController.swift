@@ -249,6 +249,12 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
 
     if let error {
       log.error("Error capturing photo: \(error.localizedDescription)")
+
+      // Restart session to allow photo recapturing
+      Task.detached { [weak self] in
+        await self?.cameraSession.startRunning()
+      }
+
       return
     }
 
