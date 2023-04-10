@@ -1,4 +1,5 @@
 import Combine
+import Foundation
 
 final class LevelComponentLogic: ComponentLogic {
   var activity: any Publisher<Bool, Never> {
@@ -17,6 +18,7 @@ final class LevelComponentLogic: ComponentLogic {
     levelChecker.start()
 
     levelChecker.$state
+      .throttle(for: .seconds(0.1), scheduler: RunLoop.main, latest: true)
       .map { $0 == .notLevel }
       .assign(to: &$activitySubject)
   }
