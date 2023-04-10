@@ -18,7 +18,7 @@ struct CameraController: UIViewControllerRepresentable {
   }
 
   func updateUIViewController(_ uiViewController: CameraViewController, context _: Context) {
-    if viewModel.capturePhoto {
+    if viewModel.startPhotoCapture {
       uiViewController.capturePhoto()
     }
   }
@@ -30,6 +30,11 @@ final class CameraViewController: UIViewController {
   private let viewModel: CameraViewViewModel
   private let onImageTaken: (UIImage) -> Void
   private let onLightLevelChanged: (Double) -> Void
+
+  private var lightLevelISOListener: NSKeyValueObservation?
+  private var deviceOrientationUponPhotoCapture: DeviceOrientationHelper.Orientation?
+
+  // MARK: - AVFoundation related resources
 
   private let cameraSession = CameraSession()
   private var videoDeviceInput: AVCaptureDeviceInput?
@@ -52,11 +57,6 @@ final class CameraViewController: UIViewController {
 
   private let videoDataOutputQueue = DispatchQueue(label: "VideoDataOutput", qos: .userInitiated, attributes: [], autoreleaseFrequency: .workItem)
 
-  private var isoListener: NSKeyValueObservation?
-  // As this view controller can be reused, the following flag ensures that it's configured only once in order to save resources.
-  private var isCameraConfigured = false
-  private var deviceOrientationUponPhotoCapture: DeviceOrientationHelper.Orientation?
-
   private static let photoQualityPrioritization: AVCapturePhotoOutput.QualityPrioritization = .quality
 
   init(viewModel: CameraViewViewModel,
@@ -69,6 +69,8 @@ final class CameraViewController: UIViewController {
     super.init(nibName: nil, bundle: nil)
 
     Task { @MainActor in
+      viewModel.state = .loading
+
       do {
         videoDataOutputDelegate = try await VideoDataOutputObjectRecognizer.create { [weak viewModel] detectedObjects in
           viewModel?.detectedObjects = detectedObjects
@@ -89,8 +91,7 @@ final class CameraViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    if !isCameraConfigured {
-      isCameraConfigured = true
+    if viewModel.state == .loading {
       configureCamera()
     }
   }
@@ -112,15 +113,21 @@ final class CameraViewController: UIViewController {
   }
 
   deinit {
-    isoListener?.invalidate()
+    lightLevelISOListener?.invalidate()
   }
 
   func capturePhoto() {
-    viewModel.capturePhoto = false
-    viewModel.capturingPhoto = true
+    Task {
+      viewModel.startPhotoCapture = false
+    }
 
-    guard let videoDeviceInput else {
+    guard viewModel.state == .ready,
+          let videoDeviceInput else {
       return
+    }
+
+    Task {
+      viewModel.state = .capturing
     }
 
     let photoSettings = createPhotoSettings(videoDeviceInput)
@@ -149,9 +156,13 @@ final class CameraViewController: UIViewController {
         videoDeviceInput: videoDeviceInput,
         outputs: [self.photoOutput, self.videoDataOutput]
       )
+
+      await MainActor.run { [weak self] in
+        self?.viewModel.state = .ready
+      }
     }
 
-    isoListener = videoDevice.observe(\.iso) { [weak self] device, _ in
+    lightLevelISOListener = videoDevice.observe(\.iso) { [weak self] device, _ in
       self?.onLightLevelChanged(videoDevice: device)
     }
   }
@@ -234,7 +245,7 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
   }
 
   public func photoOutput(_: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-    defer { viewModel.capturingPhoto = false }
+    defer { viewModel.state = .ready }
 
     if let error {
       log.error("Error capturing photo: \(error.localizedDescription)")

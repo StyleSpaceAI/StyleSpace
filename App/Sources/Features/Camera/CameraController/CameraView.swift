@@ -5,10 +5,15 @@ import SwiftUI
 
 @MainActor
 final class CameraViewViewModel: ObservableObject {
-  // Signals the camera controller to start photo capture.
-  @Published public var capturePhoto = false
-  // Signals whether the camera controller is currently capturing a photo.
-  @Published public var capturingPhoto = false
+  enum State {
+    case loading
+    case ready
+    case capturing
+  }
+
+  /// Signals the camera controller to start photo capture.
+  @Published public var startPhotoCapture = false
+  @Published public var state: State = .loading
   @Published public var lightLevelPercentage: Double?
   @Published public var detectedObjects = Set<YOLORecognizableObjects>()
 }
@@ -22,7 +27,6 @@ struct CameraView: View {
 
   var body: some View {
     CameraController(viewModel: viewModel) { image in
-      viewModel.capturingPhoto = false
       onImageTaken(image)
     }
     .overlay(alignment: .bottom) {
@@ -33,13 +37,13 @@ struct CameraView: View {
       .simultaneousGesture(
         TapGesture()
           .onEnded { _ in
-            viewModel.capturePhoto = true
+            viewModel.startPhotoCapture = true
           }
       )
-      .disabled(viewModel.capturingPhoto)
+      .disabled(viewModel.state != .ready)
     }
     .overlay(alignment: .top) {
-      if !viewModel.capturingPhoto {
+      if viewModel.state == .ready {
         UserGuidanceOverlayView { component in
           switch component {
           case .level:
