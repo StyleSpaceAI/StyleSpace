@@ -51,8 +51,7 @@ let project = Project(
         "CFBundleDisplayName": "StyleSpace",
         "UIApplicationSceneManifest": [
           "UIApplicationSupportsMultipleScenes": false,
-          "UISceneConfigurations": [
-          ],
+          "UISceneConfigurations": [:],
         ],
         "ITSAppUsesNonExemptEncryption": false,
         "UILaunchScreen": [
