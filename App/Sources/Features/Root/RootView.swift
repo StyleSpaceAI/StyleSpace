@@ -1,8 +1,55 @@
 import AppDevUtils
+import AuthenticationServices
 import ComposableArchitecture
 import IdentifiedCollections
 import Inject
 import SwiftUI
+
+// MARK: - AppleSignInDelegate
+
+final class AppleSignInDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+  static let shared = AppleSignInDelegate()
+
+  func appleSignInTapped() {
+    let provider = ASAuthorizationAppleIDProvider()
+    let request = provider.createRequest()
+    request.requestedScopes = [.fullName, .email]
+
+    let controller = ASAuthorizationController(authorizationRequests: [request])
+    controller.delegate = self
+    controller.presentationContextProvider = self
+    controller.performRequests()
+  }
+
+  func authorizationController(controller _: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+    guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else { return }
+
+    let userID = appleIDCredential.user
+    let identityToken = appleIDCredential.identityToken
+    let authCode = appleIDCredential.authorizationCode
+
+    print("userID: \(userID)")
+    print("identityToken: \(String(describing: identityToken))")
+    print("authCode: \(String(describing: authCode))")
+
+    if let authCode {
+      UIPasteboard.general.string = String(data: authCode, encoding: .utf8)
+    } else {
+      UIPasteboard.general.string = "Error: missing auth code"
+    }
+    // Send identityToken and/or authCode to your backend for verification
+
+    // Store userID in your app, as it is needed for future calls to the AppleID provider
+  }
+
+  func authorizationController(controller _: ASAuthorizationController, didCompleteWithError error: Error) {
+    UIPasteboard.general.string = "Error: \(error.localizedDescription)"
+  }
+
+  func presentationAnchor(for _: ASAuthorizationController) -> ASPresentationAnchor {
+    UIApplication.shared.keyWindowInConnectedScenes!
+  }
+}
 
 // MARK: - Root
 
@@ -126,7 +173,8 @@ public struct Root: ReducerProtocol {
         return .none
 
       case .homeScreen(.settingsButtonTapped):
-        state.path.append(.settings())
+        AppleSignInDelegate.shared.appleSignInTapped()
+        // state.path.append(.settings())
         return .none
 
       case .homeScreen:
