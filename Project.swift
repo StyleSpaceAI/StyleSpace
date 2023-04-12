@@ -71,6 +71,7 @@ let project = Project(
       resources: [
         "App/Resources/**",
       ],
+      entitlements: .relativeToManifest("StyleSpace.entitlements"),
       dependencies: [
         .external(name: "CameraButton"),
         .external(name: "AppDevUtils"),
