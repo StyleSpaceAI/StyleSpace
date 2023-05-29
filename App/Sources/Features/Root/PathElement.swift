@@ -8,6 +8,10 @@ struct PathElement: Hashable, Identifiable {
 }
 
 extension PathElement {
+  static func flowSelection() -> PathElement {
+    PathElement(route: .flowSelection)
+  }
+
   static func camera() -> PathElement {
     PathElement(route: .camera)
   }

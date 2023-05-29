@@ -13,6 +13,7 @@ public struct Root: ReducerProtocol {
     var alert: AlertState<Action>?
 
     var homeScreen = HomeScreen.State()
+    var flowSelectionScreen = FlowSelectionScreen.State()
     var cameraScreen = CameraScreen.State()
     var uploadsScreen = UploadsScreen.State()
 
@@ -27,6 +28,7 @@ public struct Root: ReducerProtocol {
     case saveState
     case alertDismissed
     case homeScreen(HomeScreen.Action)
+    case flowSelectionScreen(FlowSelectionScreen.Action)
     case cameraScreen(CameraScreen.Action)
     case uploadsScreen(UploadsScreen.Action)
     case uploadResultsScreen(id: String, action: UploadResultsScreen.Action)
@@ -44,6 +46,10 @@ public struct Root: ReducerProtocol {
 
       Scope(state: \.homeScreen, action: /Action.homeScreen) {
         HomeScreen()
+      }
+
+      Scope(state: \.flowSelectionScreen, action: /Action.flowSelectionScreen) {
+        FlowSelectionScreen()
       }
 
       Scope(state: \.cameraScreen, action: /Action.cameraScreen) {
@@ -117,8 +123,8 @@ public struct Root: ReducerProtocol {
 
         // MARK: - HomeScreen
 
-      case .homeScreen(.takePictureButtonTapped):
-        state.path.append(.camera())
+      case .homeScreen(.startRestylingButtonTapped):
+        state.path.append(.flowSelection())
         return .none
 
       case .homeScreen(.galleryButtonTapped):
@@ -130,6 +136,18 @@ public struct Root: ReducerProtocol {
         return .none
 
       case .homeScreen:
+        return .none
+
+        // MARK: - FlowSelectionScreen
+
+      case .flowSelectionScreen(.startSinglePhotoFlow):
+        state.path.append(.camera())
+        return .none
+
+      case .flowSelectionScreen(.startPhotoWithStyleGuidanceFlow):
+        return .none
+
+      case .flowSelectionScreen:
         return .none
 
         // MARK: - CameraScreen
@@ -159,8 +177,8 @@ public struct Root: ReducerProtocol {
         state.path.append(.uploadResults(id: id, state: .init(upload: upload)))
         return .none
 
-      case .uploadsScreen(.takePictureButtonTapped):
-        state.path = [.camera()]
+      case .uploadsScreen(.startRestylingButtonTapped):
+        state.path = [.flowSelection()]
         return .none
 
       case .uploadsScreen:
@@ -205,6 +223,9 @@ public struct RootView: View {
         HomeScreenView(store: store.scope(state: { $0.homeScreen }, action: { .homeScreen($0) }))
           .navigationDestination(for: PathElement.self) { pathElement in
             switch pathElement.route {
+            case .flowSelection:
+              FlowSelectionScreenView(store: store.scope(state: { $0.flowSelectionScreen }, action: { .flowSelectionScreen($0) }))
+
             case .camera:
               CameraScreenView(store: store.scope(state: { $0.cameraScreen }, action: { .cameraScreen($0) }))
 

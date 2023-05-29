@@ -3,6 +3,7 @@ import Foundation
 // MARK: - Route
 
 enum Route: Hashable {
+  case flowSelection
   case camera
   case uploads
   case uploadResults(id: String, state: UploadResultsScreen.State)

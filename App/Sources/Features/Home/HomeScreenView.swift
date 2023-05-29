@@ -9,7 +9,7 @@ public struct HomeScreen: ReducerProtocol {
   public struct State: Equatable, Codable {}
 
   public enum Action: Equatable {
-    case takePictureButtonTapped
+    case startRestylingButtonTapped
     case galleryButtonTapped
     case settingsButtonTapped
   }
@@ -17,7 +17,7 @@ public struct HomeScreen: ReducerProtocol {
   public var body: some ReducerProtocol<State, Action> {
     Reduce<State, Action> { _, action in
       switch action {
-      case .takePictureButtonTapped:
+      case .startRestylingButtonTapped:
         return .none
       case .galleryButtonTapped:
         return .none
@@ -100,8 +100,8 @@ public struct HomeScreenView: View {
             .animation(.gentleBounce().speed(0.2).delay(0.9), value: didFirstAppear)
 
             VStack(alignment: .leading, spacing: 16) {
-              Button("Take a picture") {
-                viewStore.send(.takePictureButtonTapped)
+              Button("Start restyling") {
+                viewStore.send(.startRestylingButtonTapped)
               }
               .buttonStyle(PrimaryButtonStyle())
 

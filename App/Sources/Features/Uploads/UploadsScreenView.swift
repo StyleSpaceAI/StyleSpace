@@ -15,7 +15,7 @@ public struct UploadsScreen: ReducerProtocol {
   public enum Action: Equatable {
     case didAppear
     case didTapUploadResults(id: String)
-    case takePictureButtonTapped
+    case startRestylingButtonTapped
   }
 
   @Dependency(\.uploadsStorage) var uploadsStorage: UploadsStorageClient
@@ -34,7 +34,7 @@ public struct UploadsScreen: ReducerProtocol {
       case .didTapUploadResults:
         return .none
 
-      case .takePictureButtonTapped:
+      case .startRestylingButtonTapped:
         return .none
       }
     }
@@ -65,8 +65,8 @@ public struct UploadsScreenView: View {
               .font(.DS.titleM)
               .padding(.bottom, 50)
 
-            Button("Take your first picture") {
-              viewStore.send(.takePictureButtonTapped)
+            Button("Start restyling") {
+              viewStore.send(.startRestylingButtonTapped)
             }.buttonStyle(PrimaryButtonStyle())
               .frame(maxHeight: .infinity, alignment: .bottom)
               .padding()
