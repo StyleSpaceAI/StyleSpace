@@ -152,17 +152,17 @@ public struct Root: ReducerProtocol {
 
         // MARK: - CameraScreen
 
-      case let .cameraScreen(.savePhoto(image)):
-        do {
-          let upload = Upload()
-          try uploadsStorage.saveImage(image, upload.id)
-          try uploadsStorage.addUpload(upload)
-          let uploadContainer = try uploadsStorage.getUploadContainer(upload.id).require()
-          state.path = [.uploads(), .uploadResults(id: upload.id, state: .init(upload: uploadContainer))]
-        } catch {
-          state.alert = somethingWrongAlert()
-        }
-        return .none
+//      case let .cameraScreen(.savePhoto(image)):
+//        do {
+//          let upload = Upload()
+//          try uploadsStorage.saveImage(image, upload.id)
+//          try uploadsStorage.addUpload(upload)
+//          let uploadContainer = try uploadsStorage.getUploadContainer(upload.id).require()
+//          state.path = [.uploads(), .uploadResults(id: upload.id, state: .init(upload: uploadContainer))]
+//        } catch {
+//          state.alert = somethingWrongAlert()
+//        }
+//        return .none
 
       case .cameraScreen:
         return .none
