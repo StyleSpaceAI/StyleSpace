@@ -13,7 +13,8 @@ public struct Root: ReducerProtocol {
     var alert: AlertState<Action>?
 
     var homeScreen = HomeScreen.State()
-    var flowSelectionScreen = FlowSelectionScreen.State(cameraPhoto: nil, styleGuidanceImage: nil)
+    var flowSelectionScreen = FlowSelectionScreen.State(cameraPhoto: nil)
+    var styleGuidanceFlowScreen = StyleGuidanceFlowScreen.State(cameraPhoto: nil, styleGuidanceImage: nil)
     var cameraScreen = CameraScreen.State()
     var uploadsScreen = UploadsScreen.State()
 
@@ -29,6 +30,7 @@ public struct Root: ReducerProtocol {
     case alertDismissed
     case homeScreen(HomeScreen.Action)
     case flowSelectionScreen(FlowSelectionScreen.Action)
+    case styleGuidanceFlowScreen(StyleGuidanceFlowScreen.Action)
     case cameraScreen(CameraScreen.Action)
     case uploadsScreen(UploadsScreen.Action)
     case uploadResultsScreen(id: String, action: UploadResultsScreen.Action)
@@ -50,6 +52,10 @@ public struct Root: ReducerProtocol {
 
       Scope(state: \.flowSelectionScreen, action: /Action.flowSelectionScreen) {
         FlowSelectionScreen()
+      }
+
+      Scope(state: \.styleGuidanceFlowScreen, action: /Action.styleGuidanceFlowScreen) {
+        StyleGuidanceFlowScreen()
       }
 
       Scope(state: \.cameraScreen, action: /Action.cameraScreen) {
@@ -77,7 +83,7 @@ public struct Root: ReducerProtocol {
           return .none
         }
 
-        let effect = FlowSelectionScreen().reduce(into: &flowSelectionState, action: .cameraPhotoSaved(image))
+        let effect = FlowSelectionScreen().reduce(into: &flowSelectionState, action: .onCameraPhotoSaved(image))
 
         flowPathElement.route = .flowSelection(state: flowSelectionState)
         state.path[id: flowPathElement.id] = flowPathElement
@@ -139,7 +145,7 @@ public struct Root: ReducerProtocol {
         // MARK: - HomeScreen
 
       case .homeScreen(.startRestylingButtonTapped):
-        state.path.append(.flowSelection(state: .init(cameraPhoto: nil, styleGuidanceImage: nil)))
+        state.path.append(.flowSelection(state: .init(cameraPhoto: nil)))
         return .none
 
       case .homeScreen(.galleryButtonTapped):
@@ -162,22 +168,32 @@ public struct Root: ReducerProtocol {
       case .flowSelectionScreen(.startPhotoWithStyleGuidanceFlow):
         return .none
 
+      case let .flowSelectionScreen(.submitSinglePhotoFlow(cameraPhoto)):
+        do {
+          let upload = Upload()
+          try uploadsStorage.saveImage(cameraPhoto, upload.id)
+          try uploadsStorage.addUpload(upload)
+          let uploadContainer = try uploadsStorage.getUploadContainer(upload.id).require()
+          state.path = [.uploads(), .uploadResults(id: upload.id, state: .init(upload: uploadContainer))]
+        } catch {
+          state.alert = somethingWrongAlert()
+        }
+        return .none
+
       case .flowSelectionScreen:
         return .none
 
-        // MARK: - CameraScreen
+        // MARK: StyleGuidanceFlowScreen
 
-//      case let .cameraScreen(.savePhoto(image)):
-//        do {
-//          let upload = Upload()
-//          try uploadsStorage.saveImage(image, upload.id)
-//          try uploadsStorage.addUpload(upload)
-//          let uploadContainer = try uploadsStorage.getUploadContainer(upload.id).require()
-//          state.path = [.uploads(), .uploadResults(id: upload.id, state: .init(upload: uploadContainer))]
-//        } catch {
-//          state.alert = somethingWrongAlert()
-//        }
-//        return .none
+      case let .styleGuidanceFlowScreen(.submitFlow(cameraPhoto, styleGuidanceImage)):
+        print(cameraPhoto)
+        print(styleGuidanceImage)
+        return .none
+
+      case .styleGuidanceFlowScreen:
+        return .none
+
+        // MARK: - CameraScreen
 
       case .cameraScreen:
         return .none
@@ -193,7 +209,7 @@ public struct Root: ReducerProtocol {
         return .none
 
       case .uploadsScreen(.startRestylingButtonTapped):
-        state.path = [.flowSelection(state: .init(cameraPhoto: nil, styleGuidanceImage: nil))]
+        state.path = [.flowSelection(state: .init(cameraPhoto: nil))]
         return .none
 
       case .uploadsScreen:

@@ -5,34 +5,26 @@ import SwiftUI
 
 public struct FlowSelectionScreen: ReducerProtocol {
   public struct State: Equatable, Hashable {
-    enum Flow {
-      case selection
-      case singlePhoto
-      case photoWithStyleGuidance
-    }
-
-    var flow: Flow = .selection
     var cameraPhoto: UIImage?
-    var styleGuidanceImage: UIImage?
   }
 
   public enum Action: Equatable {
     case startSinglePhotoFlow
     case startPhotoWithStyleGuidanceFlow
-    case cameraPhotoSaved(UIImage)
+    case onCameraPhotoSaved(UIImage)
+    case submitSinglePhotoFlow(cameraPhoto: UIImage)
   }
 
   public var body: some ReducerProtocol<State, Action> {
     Reduce<State, Action> { state, action in
       switch action {
       case .startSinglePhotoFlow:
-        state.flow = .singlePhoto
         return .none
       case .startPhotoWithStyleGuidanceFlow:
-        state.flow = .photoWithStyleGuidance
         return .none
-      case let .cameraPhotoSaved(image):
-        print(image)
+      case let .onCameraPhotoSaved(image):
+        return .send(.submitSinglePhotoFlow(cameraPhoto: image))
+      case .submitSinglePhotoFlow:
         return .none
       }
     }
@@ -70,7 +62,7 @@ struct FlowSelectionScreenView: View {
     static var previews: some View {
       FlowSelectionScreenView(
         store: Store(
-          initialState: FlowSelectionScreen.State(cameraPhoto: nil, styleGuidanceImage: nil),
+          initialState: FlowSelectionScreen.State(cameraPhoto: nil),
           reducer: FlowSelectionScreen()
         )
       )
