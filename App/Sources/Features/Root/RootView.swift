@@ -76,7 +76,6 @@ public struct Root: ReducerProtocol {
     Reduce<State, Action> { state, action in
       switch action {
       case let .cameraScreen(.savePhoto(image)):
-
         if var pathElement = state.path.first(where: { $0.route.styleGuidanceFlowState != nil }),
            var styleGuidanceFlowState = pathElement.route.styleGuidanceFlowState {
           let effect = StyleGuidanceFlowScreen().reduce(into: &styleGuidanceFlowState, action: .onCameraPhotoSaved(image))
