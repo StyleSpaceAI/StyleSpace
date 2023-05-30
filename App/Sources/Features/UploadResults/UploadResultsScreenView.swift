@@ -46,7 +46,7 @@ public struct UploadResultsScreen: ReducerProtocol {
   @Dependency(\.backend) var backendClient: BackendClient
   @Dependency(\.uploadsStorage) var uploadsStorage: UploadsStorageClient
   @Dependency(\.continuousClock) var clock
-  private enum TimerID {}
+  private struct TimerID: Hashable {}
 
   public var body: some ReducerProtocol<State, Action> {
     Reduce<State, Action> { state, action in
@@ -145,7 +145,7 @@ public struct UploadResultsScreen: ReducerProtocol {
         await send(.refreshCurrentRunTimer)
       }
     })
-    .cancellable(id: TimerID.self, cancelInFlight: true)
+    .cancellable(id: TimerID(), cancelInFlight: true)
   }
 
   private func uploadImage(state: State) -> EffectTask<Action> {

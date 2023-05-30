@@ -1,6 +1,10 @@
 import AppDevUtils
 import Foundation
 
+struct Secrets {
+static let backendBaseURL = "https://stylespace.app/"
+static let serpApiKey = ""
+}
 enum BackendEndpoint {
   static let baseUrl = URL(string: Secrets.backendBaseURL)!
   static let serpApiBaseUrl = URL(staticString: "https://serpapi.com")
