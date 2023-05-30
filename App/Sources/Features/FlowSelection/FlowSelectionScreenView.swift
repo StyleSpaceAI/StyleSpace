@@ -4,30 +4,36 @@ import SwiftUI
 // MARK: - FlowSelectionScreen
 
 public struct FlowSelectionScreen: ReducerProtocol {
-  public struct State: Equatable {
-    var cameraScreen = CameraScreen.State()
+  public struct State: Equatable, Hashable {
+    enum Flow {
+      case selection
+      case singlePhoto
+      case photoWithStyleGuidance
+    }
+
+    var flow: Flow = .selection
+    var cameraPhoto: UIImage?
+    var styleGuidanceImage: UIImage?
   }
 
   public enum Action: Equatable {
     case startSinglePhotoFlow
     case startPhotoWithStyleGuidanceFlow
-    case cameraScreen(CameraScreen.Action)
+    case cameraPhotoSaved(UIImage)
   }
 
   public var body: some ReducerProtocol<State, Action> {
-    CombineReducers {
-      Scope(state: \.cameraScreen, action: /Action.cameraScreen) {
-        CameraScreen()
-      }
-      Reduce<State, Action> { _, action in
-        switch action {
-        case .startSinglePhotoFlow:
-          return .none
-        case .startPhotoWithStyleGuidanceFlow:
-          return .none
-        case .cameraScreen:
-          return .none
-        }
+    Reduce<State, Action> { state, action in
+      switch action {
+      case .startSinglePhotoFlow:
+        state.flow = .singlePhoto
+        return .none
+      case .startPhotoWithStyleGuidanceFlow:
+        state.flow = .photoWithStyleGuidance
+        return .none
+      case let .cameraPhotoSaved(image):
+        print(image)
+        return .none
       }
     }
   }
@@ -43,23 +49,20 @@ struct FlowSelectionScreenView: View {
   }
 
   var body: some View {
-//    WithViewStore(self.store, observe: { $0 }) { viewStore in
+    WithViewStore(self.store, observe: { $0 }) { viewStore in
       VStack(spacing: 100) {
+        Button("Single Photo") {
+          viewStore.send(.startSinglePhotoFlow)
+        }.buttonStyle(PrimaryButtonStyle())
 
-        NavigationLink(
-          destination: CameraScreenView(store: self.store.scope(state: \.cameraScreen, action: { .cameraScreen($0) }))
-        ) {
-          Text("Single photo")
-        }
-
-//        Button("Photo with Style Guidance") {
-//          viewStore.send(.startPhotoWithStyleGuidanceFlow)
-//        }.buttonStyle(PrimaryButtonStyle())
+        Button("Photo with Style Guidance") {
+          viewStore.send(.startPhotoWithStyleGuidanceFlow)
+        }.buttonStyle(PrimaryButtonStyle())
       }
       .padding([.leading, .trailing], 24)
       .padding([.top, .bottom], 24)
     }
-//  }
+  }
 }
 
 #if DEBUG
@@ -67,7 +70,7 @@ struct FlowSelectionScreenView: View {
     static var previews: some View {
       FlowSelectionScreenView(
         store: Store(
-          initialState: FlowSelectionScreen.State(),
+          initialState: FlowSelectionScreen.State(cameraPhoto: nil, styleGuidanceImage: nil),
           reducer: FlowSelectionScreen()
         )
       )

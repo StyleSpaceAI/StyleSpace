@@ -13,7 +13,7 @@ public struct Root: ReducerProtocol {
     var alert: AlertState<Action>?
 
     var homeScreen = HomeScreen.State()
-    var flowSelectionScreen = FlowSelectionScreen.State()
+    var flowSelectionScreen = FlowSelectionScreen.State(cameraPhoto: nil, styleGuidanceImage: nil)
     var cameraScreen = CameraScreen.State()
     var uploadsScreen = UploadsScreen.State()
 
@@ -69,6 +69,21 @@ public struct Root: ReducerProtocol {
   var routeReducer: some ReducerProtocolOf<Root> {
     Reduce<State, Action> { state, action in
       switch action {
+      case let .cameraScreen(.savePhoto(image)):
+        guard var flowPathElement = state.path.first(where: { $0.route.flowSelectionState != nil }),
+              var flowSelectionState = flowPathElement.route.flowSelectionState else {
+          log.error("Could not find flow selection state")
+          assertionFailure()
+          return .none
+        }
+
+        let effect = FlowSelectionScreen().reduce(into: &flowSelectionState, action: .cameraPhotoSaved(image))
+
+        flowPathElement.route = .flowSelection(state: flowSelectionState)
+        state.path[id: flowPathElement.id] = flowPathElement
+
+        return effect.map { .flowSelectionScreen($0) }
+
       case let .uploadResultsScreen(id, resultAction):
         // We get the state of the screen from our route array
         guard var pathElement = state.path.first(where: { $0.route.uploadResultsState?.id == id }),
@@ -124,7 +139,7 @@ public struct Root: ReducerProtocol {
         // MARK: - HomeScreen
 
       case .homeScreen(.startRestylingButtonTapped):
-        state.path.append(.flowSelection())
+        state.path.append(.flowSelection(state: .init(cameraPhoto: nil, styleGuidanceImage: nil)))
         return .none
 
       case .homeScreen(.galleryButtonTapped):
@@ -178,7 +193,7 @@ public struct Root: ReducerProtocol {
         return .none
 
       case .uploadsScreen(.startRestylingButtonTapped):
-        state.path = [.flowSelection()]
+        state.path = [.flowSelection(state: .init(cameraPhoto: nil, styleGuidanceImage: nil))]
         return .none
 
       case .uploadsScreen:

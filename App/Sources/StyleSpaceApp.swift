@@ -8,7 +8,7 @@ struct StyleSpaceApp: App {
       RootView(
         store: Store(
           initialState: RootStateStorage.readState(),
-          reducer: Root()._printChanges()
+          reducer: Root()
         )
       )
     }
