@@ -12,6 +12,10 @@ extension PathElement {
     PathElement(route: .flowSelection(state: state))
   }
 
+  static func styleGuidanceFlow(state: StyleGuidanceFlowScreen.State) -> PathElement {
+    PathElement(route: .styleGuidanceFlow(state: state))
+  }
+
   static func camera() -> PathElement {
     PathElement(route: .camera)
   }

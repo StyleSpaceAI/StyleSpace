@@ -43,11 +43,11 @@ struct FlowSelectionScreenView: View {
   var body: some View {
     WithViewStore(self.store, observe: { $0 }) { viewStore in
       VStack(spacing: 100) {
-        Button("Single Photo") {
+        Button("Single photo") {
           viewStore.send(.startSinglePhotoFlow)
         }.buttonStyle(PrimaryButtonStyle())
 
-        Button("Photo with Style Guidance") {
+        Button("Photo with style guidance") {
           viewStore.send(.startPhotoWithStyleGuidanceFlow)
         }.buttonStyle(PrimaryButtonStyle())
       }

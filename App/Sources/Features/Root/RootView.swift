@@ -76,19 +76,28 @@ public struct Root: ReducerProtocol {
     Reduce<State, Action> { state, action in
       switch action {
       case let .cameraScreen(.savePhoto(image)):
-        guard var flowPathElement = state.path.first(where: { $0.route.flowSelectionState != nil }),
-              var flowSelectionState = flowPathElement.route.flowSelectionState else {
-          log.error("Could not find flow selection state")
+
+        if var pathElement = state.path.first(where: { $0.route.styleGuidanceFlowState != nil }),
+           var styleGuidanceFlowState = pathElement.route.styleGuidanceFlowState {
+          let effect = StyleGuidanceFlowScreen().reduce(into: &styleGuidanceFlowState, action: .onCameraPhotoSaved(image))
+
+          pathElement.route = .styleGuidanceFlow(state: styleGuidanceFlowState)
+          state.path[id: pathElement.id] = pathElement
+
+          return effect.map { .styleGuidanceFlowScreen($0) }
+        } else if var pathElement = state.path.first(where: { $0.route.flowSelectionState != nil }),
+                  var flowSelectionState = pathElement.route.flowSelectionState {
+          let effect = FlowSelectionScreen().reduce(into: &flowSelectionState, action: .onCameraPhotoSaved(image))
+
+          pathElement.route = .flowSelection(state: flowSelectionState)
+          state.path[id: pathElement.id] = pathElement
+
+          return effect.map { .flowSelectionScreen($0) }
+        } else {
+          log.error("Could not find flow state that accepts camera photo")
           assertionFailure()
           return .none
         }
-
-        let effect = FlowSelectionScreen().reduce(into: &flowSelectionState, action: .onCameraPhotoSaved(image))
-
-        flowPathElement.route = .flowSelection(state: flowSelectionState)
-        state.path[id: flowPathElement.id] = flowPathElement
-
-        return effect.map { .flowSelectionScreen($0) }
 
       case let .uploadResultsScreen(id, resultAction):
         // We get the state of the screen from our route array
@@ -166,6 +175,7 @@ public struct Root: ReducerProtocol {
         return .none
 
       case .flowSelectionScreen(.startPhotoWithStyleGuidanceFlow):
+        state.path.append(.styleGuidanceFlow(state: .init(cameraPhoto: nil, styleGuidanceImage: nil)))
         return .none
 
       case let .flowSelectionScreen(.submitSinglePhotoFlow(cameraPhoto)):
@@ -184,6 +194,14 @@ public struct Root: ReducerProtocol {
         return .none
 
         // MARK: StyleGuidanceFlowScreen
+
+      case .styleGuidanceFlowScreen(.takePhoto):
+        state.path.append(.camera())
+        return .none
+
+      case .styleGuidanceFlowScreen(.dismissCamera):
+        state.path.removeLast()
+        return .none
 
       case let .styleGuidanceFlowScreen(.submitFlow(cameraPhoto, styleGuidanceImage)):
         print(cameraPhoto)
@@ -256,6 +274,9 @@ public struct RootView: View {
             switch pathElement.route {
             case .flowSelection:
               FlowSelectionScreenView(store: store.scope(state: { $0.flowSelectionScreen }, action: { .flowSelectionScreen($0) }))
+
+            case .styleGuidanceFlow:
+              StyleGuidanceFlowScreenView(store: store.scope(state: { $0.styleGuidanceFlowScreen }, action: { .styleGuidanceFlowScreen($0) }))
 
             case .camera:
               CameraScreenView(store: store.scope(state: { $0.cameraScreen }, action: { .cameraScreen($0) }))

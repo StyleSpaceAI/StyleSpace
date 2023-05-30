@@ -2,27 +2,42 @@ import ComposableArchitecture
 import SwiftUI
 
 public struct StyleGuidanceFlowScreen: ReducerProtocol {
-  public struct State: Equatable {
+  public struct State: Equatable, Hashable {
     var cameraPhoto: UIImage?
     var styleGuidanceImage: UIImage?
   }
 
   public enum Action: Equatable {
+    case takePhoto
+    case dismissCamera
+    case chooseStyleGuideImage
+    case submitFlow(cameraPhoto: UIImage, styleGuidanceImage: UIImage)
+
     case onCameraPhotoSaved(UIImage)
     case onStyleGuidanceImageSelected(UIImage)
-    case submitFlow(cameraPhoto: UIImage, styleGuidanceImage: UIImage)
   }
 
   public var body: some ReducerProtocol<State, Action> {
     Reduce<State, Action> { state, action in
       switch action {
+      case .takePhoto:
+        return .none
+
+      case .dismissCamera:
+        return .none
+
+      case .chooseStyleGuideImage:
+        return .none
+
+      case .submitFlow:
+        return .none
+
       case let .onCameraPhotoSaved(image):
         state.cameraPhoto = image
-        return .none
+        return .send(.dismissCamera)
+
       case let .onStyleGuidanceImageSelected(image):
         state.styleGuidanceImage = image
-        return .none
-      case .submitFlow:
         return .none
       }
     }
@@ -37,14 +52,18 @@ struct StyleGuidanceFlowScreenView: View {
   }
 
   var body: some View {
-    WithViewStore(self.store, observe: { $0 }) { viewStore in
+    WithViewStore(store, observe: { $0 }) { viewStore in
       VStack(spacing: 40) {
-        Button("Take a room photo") {
-          viewStore.send(.onCameraPhotoSaved(UIImage()))
-        }.buttonStyle(PrimaryButtonStyle())
+        if let cameraPhoto = viewStore.cameraPhoto {
+          Image(uiImage: cameraPhoto)
+        } else {
+          Button("Take a room photo") {
+            viewStore.send(.takePhoto)
+          }
+          .buttonStyle(PrimaryButtonStyle())
+        }
 
         Button("Select a style guidance image") {
-          viewStore.send(.onStyleGuidanceImageSelected(UIImage()))
         }.buttonStyle(PrimaryButtonStyle())
       }
       .padding([.leading, .trailing], 24)
