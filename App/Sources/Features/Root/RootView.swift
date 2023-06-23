@@ -1,8 +1,48 @@
 import AppDevUtils
+import AuthenticationServices
 import ComposableArchitecture
 import IdentifiedCollections
 import Inject
 import SwiftUI
+
+final class AppleSignInDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+  static let shared = AppleSignInDelegate()
+
+  func appleSignInTapped() {
+    let provider = ASAuthorizationAppleIDProvider()
+    let request = provider.createRequest()
+    request.requestedScopes = [.fullName, .email]
+
+    let controller = ASAuthorizationController(authorizationRequests: [request])
+    controller.delegate = self
+    controller.presentationContextProvider = self
+    controller.performRequests()
+  }
+
+  func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+    guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else { return }
+
+    let userID = appleIDCredential.user
+    let identityToken = appleIDCredential.identityToken
+    let authCode = appleIDCredential.authorizationCode
+    
+    print("authCode: \(String(describing: authCode))")
+    if let authCode {
+      UIPasteboard.general.string = String(data: authCode, encoding: .utf8)
+    } else {
+      UIPasteboard.general.string = "oopsie that's not a token"
+    }
+  }
+
+  func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+    UIPasteboard.general.string = error.localizedDescription
+  }
+
+  func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+    return UIApplication.shared.keyWindowInConnectedScenes!
+  }
+}
+
 
 // MARK: - Root
 
@@ -128,7 +168,8 @@ public struct Root: ReducerProtocol {
         return .none
 
       case .homeScreen(.settingsButtonTapped):
-        state.path.append(.settings())
+//        state.path.append(.settings())
+        AppleSignInDelegate.shared.appleSignInTapped()
         return .none
 
       case .homeScreen:
