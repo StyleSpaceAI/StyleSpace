@@ -46,7 +46,10 @@ public struct UploadResultsScreen: ReducerProtocol {
   @Dependency(\.backend) var backendClient: BackendClient
   @Dependency(\.uploadsStorage) var uploadsStorage: UploadsStorageClient
   @Dependency(\.continuousClock) var clock
-  private enum TimerID {}
+
+  private enum CancelID {
+    case timer
+  }
 
   public var body: some ReducerProtocol<State, Action> {
     Reduce<State, Action> { state, action in
@@ -78,7 +81,7 @@ public struct UploadResultsScreen: ReducerProtocol {
       case let .didFinishDownloadingResults(.failure(error)):
         state.upload.status = .downloading(.failed(error.equatable))
         log.error("Error fetching images: \(error)")
-        return .cancel(id: TimerID.self)
+        return .cancel(id: CancelID.timer)
 
       case let .didFinishDownloadingResults(.success(interiorURLs)):
         // Reset timer for current run when new interiors are added
@@ -99,7 +102,7 @@ public struct UploadResultsScreen: ReducerProtocol {
           state.upload.status = .downloading(.progress(progress))
         } else {
           state.upload.status = .downloading(.completed)
-          return .cancel(id: TimerID.self)
+          return .cancel(id: CancelID.timer)
         }
 
         return .none
@@ -145,7 +148,7 @@ public struct UploadResultsScreen: ReducerProtocol {
         await send(.refreshCurrentRunTimer)
       }
     })
-    .cancellable(id: TimerID.self, cancelInFlight: true)
+    .cancellable(id: CancelID.timer)
   }
 
   private func uploadImage(state: State) -> EffectTask<Action> {

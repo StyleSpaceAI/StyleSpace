@@ -36,7 +36,9 @@ public struct Root: ReducerProtocol {
   @Dependency(\.continuousClock) var clock
   @Dependency(\.coreMLModelProvider) var coreMLModelProvider: CoreMLModelProvider
 
-  private enum TimerID {}
+  private enum CancelID {
+    case timer
+  }
 
   public var body: some ReducerProtocol<State, Action> {
     CombineReducers {
@@ -105,7 +107,7 @@ public struct Root: ReducerProtocol {
             await send(.saveState)
           }
         }
-        .cancellable(id: TimerID.self, cancelInFlight: true)
+        .cancellable(id: CancelID.timer)
 
       case .saveState:
         RootStateStorage.saveState(state)
@@ -220,7 +222,7 @@ public struct RootView: View {
           }
       }
       .alert(
-        store.scope(state: \.alert),
+        store.scope(state: \.alert, action: { $0 }),
         dismiss: .alertDismissed
       )
       .task { viewStore.send(.task) }
