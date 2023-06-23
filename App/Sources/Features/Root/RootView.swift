@@ -22,8 +22,6 @@ final class AppleSignInDelegate: NSObject, ASAuthorizationControllerDelegate, AS
   func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
     guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else { return }
 
-    let userID = appleIDCredential.user
-    let identityToken = appleIDCredential.identityToken
     let authCode = appleIDCredential.authorizationCode
     
     print("authCode: \(String(describing: authCode))")
